@@ -19,8 +19,6 @@ typedef struct{
   int player;
 }BoardInfo;
 
-
-
 void readInput(PlayerInfo player){
 	int row,column;
   do{
@@ -28,7 +26,6 @@ void readInput(PlayerInfo player){
     scanf("%d %d",row,column);
   }while(row<1||row>3||column<1||column>3);
 }
-
 
 int main(int argc,const char** argv){
   
