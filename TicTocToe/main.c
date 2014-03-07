@@ -65,10 +65,14 @@ void initBoard(GameInfo game){
 
 void drawBoard(GameInfo game){
 	int j=1,i=1;
-	for(i;i<=3;i++){
-		printf()
-		for(j;j<=3;j++){
-			
+	for(i;i<=game.size;i++){
+		printf("%c | ",game.board[i][j].ox);
+		for(j;j<=(game.size*2)-1;j++){
+			if(j%2==1){
+				printf("__");
+			}else{
+				printf("%c",game.board[i][j].ox);
+			}
 		}
 	}
 }
