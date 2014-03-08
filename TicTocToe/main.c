@@ -27,14 +27,15 @@ typedef struct{
 	int size;
 	int numPlayer;
 	int turn;
-	PlayerInfo* players;
+	PlayerInfo p1;
+	PlayerInfo p2;
 }GameInfo;
 
 //function prototypes
 void initBoard(GameInfo game);
 void readPos(GameInfo game);
 void initPlayers(GameInfo game);
-void initPlayer(GameInfo game);
+void initPlayer(PlayerInfo player);
 void drawBoard(GameInfo game);
 void AI(GameInfo game);
 void twoPlay(GameInfo game);
@@ -44,9 +45,9 @@ void onePlay(GameInfo game);
 void initBoard(GameInfo game){
 	int size;
 	do{
-		printf("How big is the grid? (input nummber)\n");
+		printf("How big is the grid? (input number)\n");
 		scanf("%d",&size);
-	}while(size<=3);
+	}while(size<3);
 	game.board=malloc(sizeof(BoardInfo*)*size);
 	int i,j;
 	for(i=0;i<size;i++){
@@ -59,52 +60,61 @@ void initBoard(GameInfo game){
 
 void readPos(GameInfo game){
 	int row,column;
-	game.players[game.turn%2].lenPos++;
-	game.players[game.turn%2].position=realloc(game.players[game.turn%2].position,sizeof(game.players[game.turn%2].position)*game.players[game.turn%2].lenPos);
+	game.p1.lenPos++;
+	game.p1.position=realloc(game.p1.position,sizeof(game.p1.position)*game.p1.lenPos);
   do{
   	printf("What is your move? (row column)\n");
     scanf("%d %d",&row,&column);
   }while(game.size<row||row<1||game.size<column||column<1);
-  game.board[row][column].xo=game.players[game.turn%2].xo;
+  game.board[row][column].xo=game.p1.xo;
+}
+
+void readMulPos(GameInfo game){
+	int row,column;
+	if(game.turn%2==0){
+		game.p1.lenPos++;
+		game.p1.position=realloc(game.p1.position,sizeof(game.p1.position)*game.p1.lenPos);
+  }else{
+  	game.p1.lenPos++;
+		game.p1.position=realloc(game.p1.position,sizeof(game.p1.position)*game.p1.lenPos);
+  }
+  do{
+  	printf("What is your move? (row column)\n");
+    scanf("%d %d",&row,&column);
+  }while(game.size<=row||row<1||game.size<=column||column<1);
+  if(game.turn%2==0){
+  	game.board[row][column].xo=game.p1.xo;
+  }else{
+  	game.board[row][column].xo=game.p2.xo;
+  }
 }
 
 void initPlayers(GameInfo game){
 	do{
 		printf("How many players are playing?\n");
 		scanf("%d",&game.numPlayer);
-	}while(game.numPlayer<1||game.numPlayer>2);
-	game.players=malloc(sizeof(PlayerInfo)*game.numPlayer);
+	}while(game.numPlayer<0||game.numPlayer>2);
 	switch(game.numPlayer){
 		case 0:
 			printf("Nothing to do!\n");
 			break;
 		case 1:
-			game.turn=0;
-			initPlayer(game);
+			initPlayer(game.p1);
 		case 2:
-			game.turn=0;
-			printf("%d\n",game.turn);
-			initPlayer(game);
-			game.turn++;
-			printf("%d\n",game.turn);
-			initPlayer(game);
-			game.turn=0;
+			initPlayer(game.p1);
+			initPlayer(game.p2);
 			break;
 	}
 }
 
-void initPlayer(GameInfo game){
-printf("INITPLAYERS\n");
-
-	game.players[game.turn%2].position=NULL;
-	game.players[game.turn%2].lenPos=0;
+void initPlayer(PlayerInfo player){
+printf("INIT PLAYER\n");
+	player.position=NULL;
+	player.lenPos=0;
 	do{
-	printf("1:%d\n",game.turn%2);
-	printf("2:%c\n",game.players[game.turn%2].xo);
 		printf("What Charactor do you want to be X or O ?\n");
-		scanf("%c",&game.players[game.turn%2].xo);
-		printf("3:%d\n",game.turn%2);
-	}while(game.players[game.turn%2].xo!='x'||game.players[game.turn%2].xo!='X'||game.players[game.turn%2].xo!='o'||game.players[game.turn%2].xo!='O');
+		scanf("%c",&player.xo);
+	}while(player.xo!='x'||player.xo!='X'||player.xo!='o'||player.xo!='O');
 }
 
 void drawBoard(GameInfo game){
@@ -126,12 +136,12 @@ void AI(GameInfo game){
 }
 
 void twoPlay(GameInfo game){
-	while(game.players[0].win==1||game.players[1].win==1){
+	while(game.p1.win==1||game.p2.win==1){
   	drawBoard(game);
-  	readPos(game);
+  	readMulPos(game);
   	game.turn++;
   }
-  if(game.players[0].win==0){
+  if(game.p1.win==0){
   	printf("Player 1: WINS\n");
   }else{
   	printf("Player 2: WINS\n");
@@ -139,7 +149,7 @@ void twoPlay(GameInfo game){
 }
 
 void onePlay(GameInfo game){
-		while(game.players[0].win==1||game.players[1].win==1){
+	while(game.p1.win==1||game.p2.win==1){
   	drawBoard(game);
   	readPos(game);
   	game.turn++;
@@ -147,7 +157,7 @@ void onePlay(GameInfo game){
   		AI(game);
   	}
   }
-  if(game.players[0].win==0){
+  if(game.p1.win==0){
   	printf("Player 1: WINS\n");
   }else{
   	printf("Player 2: WINS\n");
