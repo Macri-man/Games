@@ -177,7 +177,7 @@ void onePlay(GameInfo game){
 }
 
 int main(int argc,const char** argv){
-	fprintf(stdout,"This is TicTocToe. You know the rules. Have fun.\n");
+  fprintf(stdout,"This is TicTocToe. You know the rules. Have fun.\n");
   GameInfo game;
   initPlayers(game);
   initBoard(game);
