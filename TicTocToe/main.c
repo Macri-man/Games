@@ -4,10 +4,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
 //objects
 typedef struct{
-  int x;
-  int y;
+  int row;
+  int column;
 }pos;
 
 typedef struct{
@@ -31,156 +32,205 @@ typedef struct{
 	PlayerInfo p2;
 }GameInfo;
 
+GameInfo game;
+
 //function prototypes
-void initBoard(GameInfo game);
-void readPos(GameInfo game);
-void initPlayers(GameInfo game);
-void initPlayer(PlayerInfo player);
-void drawBoard(GameInfo game);
-void AI(GameInfo game);
-void twoPlay(GameInfo game);
-void onePlay(GameInfo game);
+void initBoard();
+void readPos();
+void initPlayers();
+void initPlayer();
+void drawBoard();
+void drawHelper(char c, int i,int j);
+int winCheck(char c);
+int checkBounds(int row,int column);
+int checkMove(int row,int column);
+void AI();
+void twoPlay();
+void onePlay();
 
 //function implementation
-void initBoard(GameInfo game){
-	int size;
+void initBoard(){
 	do{
 		fprintf(stdout,"How big is the grid? (input number)\n");
-		size=fgetc(stdin);
-		fprintf(stdout,"size: %d\n",size);
-	}while(size<3);
-	game.board=malloc(sizeof(BoardInfo*)*size);
+		scanf("%d",&game.size);
+		fprintf(stdout,"size: %d\n",game.size);
+	}while(game.size<3||game.size>3);
+	game.board=malloc(sizeof(BoardInfo*)*game.size);
 	int i,j;
-	for(i=0;i<size;i++){
-		game.board[i]=malloc(sizeof(BoardInfo)*size);
-		for(j=0;j<size;j++){
+	for(i=0;i<game.size;i++){
+		game.board[i]=malloc(sizeof(BoardInfo)*game.size);
+		for(j=0;j<game.size;j++){
 			game.board[i][j].xo=' ';
 		}
 	}
-	fprintf(stdout,"made board\n");
+	fprintf(stderr,"made board\n");
 }
 
-void readPos(GameInfo game){
-	int row,column;
-	game.p1.lenPos++;
-	game.p1.position=realloc(game.p1.position,sizeof(game.p1.position)*game.p1.lenPos);
-  do{
-  	printf("What is your move? (row enter column)\n");
-    row=fgetc(stdin);
-    column=fgetc(stdin);
-  }while(game.size<row||row<1||game.size<column||column<1);
-  game.board[row][column].xo=game.p1.xo;
-}
-
-void readMulPos(GameInfo game){
-	int row,column;
-	if(game.turn%2==0){
-		game.p1.lenPos++;
-		game.p1.position=realloc(game.p1.position,sizeof(game.p1.position)*game.p1.lenPos);
-  }else{
-  	game.p1.lenPos++;
-		game.p1.position=realloc(game.p1.position,sizeof(game.p1.position)*game.p1.lenPos);
-  }
-  do{
-  	printf("What is your move? (row column)\n");
-    scanf("%d %d",&row,&column);
-  }while(game.size<=row||row<1||game.size<=column||column<1);
-  if(game.turn%2==0){
-  	game.board[row][column].xo=game.p1.xo;
-  }else{
-  	game.board[row][column].xo=game.p2.xo;
-  }
-}
-
-void initPlayers(GameInfo game){
+void initPlayers(){
 	do{
-		fprintf(stdout,"How many players are playing?\n");
-		game.numPlayer=fgetc(stdin)-'0';
-		printf("numplayer: %d\n",game.numPlayer);
-		while(fgetc(stdin) != '\n'); 
+		fprintf(stderr,"How many players are playing? (from 0 to 2 players allowed)\n");
+		scanf("%d",&game.numPlayer);
+		fprintf(stderr,"numplayer: %d\n",game.numPlayer);
 	}while(game.numPlayer<0||game.numPlayer>2);
+	game.p1.xo='X';
+	game.p1.position=NULL;
+	game.p1.lenPos=0;
+	game.p1.win=0;
+	game.p2.xo='O';
+	game.p2.position=NULL;
+	game.p2.lenPos=0;
+	game.p2.win=0;
 	switch(game.numPlayer){
 		case 0:
 			printf("Nothing to do!\n");
 			break;
 		case 1:
-			game.p1.xo='X';
-			game.p1.position=NULL;
-			game.p1.lenPos=0;
-			game.p2.xo='O';
-			game.p2.position=NULL;
-			game.p2.lenPos=0;
 			printf("p1: %c p2: %c\n",game.p1.xo,game.p2.xo);
 			break;
 		case 2:
-		fprintf(stdout,"numplayer: %d\n",game.numPlayer);
-			game.p1.xo='X';
-			game.p1.position=NULL;
-			game.p1.lenPos=0;
-			game.p1.win=1;
-			game.p2.xo='O';
-			game.p2.position=NULL;
-			game.p2.lenPos=0;
-			game.p2.win=1;
 			printf("p1: %c p2: %c\n",game.p1.xo,game.p2.xo);
 			break;
 	}
 }
 
-void drawBoard(GameInfo game){
-fprintf(stdout,"draw board\n");
+void readMulPos(){
+	int row,column;
+  	do{
+  		fprintf(stderr,"What is your move? (row column)\n");
+    	scanf("%d %d",&row,&column);
+  	}while(checkBounds(row,column)==0||checkMove(row,column)==0);
+  	if(game.turn%2==0){
+  		game.p1.lenPos++;
+		game.p1.position=realloc(game.p1.position,sizeof(game.p1.position)*game.p1.lenPos);
+  		game.board[row][column].xo=game.p1.xo;
+  		game.p1.position.row=row;
+  		game.p1.position.column=column;
+  	}else{
+  		game.p2.lenPos++;
+		game.p2.position=realloc(game.p2.position,sizeof(game.p2.position)*game.p2.lenPos);
+  		game.board[row][column].xo=game.p2.xo;
+  		game.p2.position.row=row;
+  		game.p2.position.column=column;
+  	}
+}
+
+int checkBounds(int row,int column){
+	return (game.size<row||row<0||game.size<column||column<0)?0:1;
+}
+
+int checkMove(int row,int column){
+	return (game.board[row][column].xo==' ')?2:0;
+}
+
+int winCheck(char c){
+	int i=(c==game.p1.xo)?1:2;
+	if(c==game.board[0][0].xo&&c==game.board[0][1].xo&&c==game.board[0][2].xo)return i;
+	if(c==game.board[1][0].xo&&c==game.board[1][1].xo&&c==game.board[1][2].xo)return i;
+	if(c==game.board[2][0].xo&&c==game.board[2][1].xo&&c==game.board[2][2].xo)return i;
+	if(c==game.board[0][0].xo&&c==game.board[1][0].xo&&c==game.board[2][0].xo)return i;
+	if(c==game.board[0][1].xo&&c==game.board[1][1].xo&&c==game.board[2][1].xo)return i;
+	if(c==game.board[0][2].xo&&c==game.board[1][2].xo&&c==game.board[2][2].xo)return i;
+	if(c==game.board[0][0].xo&&c==game.board[1][1].xo&&c==game.board[2][2].xo)return i;
+	if(c==game.board[0][2].xo&&c==game.board[1][1].xo&&c==game.board[2][0].xo)return i;
+	return 0;
+}
+
+/*void drawBoard(){
+fprintf(stderr,"draw board game size: %d\n",game.size);
 	int j,i;
-	for(i=1;i<=game.size;i++){
-		printf("%c | ",game.board[i][j].xo);
-		for(j=1;j<=(game.size*2)-1;j++){
+	for(i=0;i<game.size*2;i++){
+		(i%2==0)?fprintf(stderr,"|"):fprintf(stderr,"-");
+		for(j=0;j<game.size*2;j++){
 			if(j%2==1){
-				printf("__");
+				fprintf(stderr,"|");
 			}else{
-				printf("%c",game.board[i][j].xo);
+				fprintf(stderr,"%c",game.board[i/2][j/2].xo);
 			}
+		}
+		fprintf(stderr,"\n");
+	}
+}*/
+
+void drawBoard(){
+	fprintf(stderr,"draw board game size: %d\n",game.size);
+	drawHelper(' ',0,0);
+	fprintf(stderr, "DONE!\n");
+}
+
+void drawHelper(char c,int i,int j){
+	fprintf(stderr, "%c",c);
+	if(i<(game.size*2)+1){
+		if(j<((game.size*2)+1)){
+			if(i%2==0){
+				drawHelper('-',i,j+1);
+			}else{
+				if(j%2==0){
+					drawHelper('|',i,j+1);
+				}else{
+					drawHelper(game.board[i/2][j/2].xo,i,j+1);
+				}
+			}
+		}else{
+			fprintf(stderr, "\n");
+			drawHelper(' ',i+1,0);
 		}
 	}
 }
 
-void AI(GameInfo game){
+void AI(){
 	
 }
 
-void twoPlay(GameInfo game){
-printf("play a game\n");
-	while(game.p1.win!=0||game.p2.win!=0){
-  	drawBoard(game);
-  	readMulPos(game);
-  	game.turn++;
-  }
-  if(game.p1.win==0){
-  	printf("Player 1: WINS\n");
-  }else{
-  	printf("Player 2: WINS\n");
-  }
+void twoPlay(){
+	fprintf(stderr,"play a game\n");
+	while(game.p1.win!=1&&game.p2.win!=2){
+  		drawBoard();
+  		readMulPos();
+  		game.p1.win=winCheck('X');
+  		game.p2.win=winCheck('0');
+  		fprintf(stderr, "%d\n",game.p1.win);
+  		fprintf(stderr, "%d\n",game.p2.win);
+  		game.turn++;
+  	}
+  	if(game.p1.win==1){
+  		drawBoard();
+  		fprintf(stderr,"Player 1: WINS\n");
+  	}else{
+  		drawBoard();
+  		fprintf(stderr,"Player 2: WINS\n");
+  	}
 }
 
-void onePlay(GameInfo game){
-	while(game.p1.win!=0||game.p2.win!=0){
-  	drawBoard(game);
-  	readPos(game);
-  	game.turn++;
-  	if(game.turn%2==1){
-  		AI(game);
+void onePlay(){
+	fprintf(stderr,"play a game\n");
+	while(game.p1.win!=1&&game.p2.win!=2){
+  		drawBoard();
+  		if(game.turn%2==0){
+  			readMulPos();
+  		}else{
+  			AI();
+  		}
+  		game.p1.win=winCheck('X');
+  		game.p2.win=winCheck('0');
+  		fprintf(stderr, "%d\n",game.p1.win);
+  		fprintf(stderr, "%d\n",game.p2.win);
+  		game.turn++;
+  		
   	}
-  }
-  if(game.p1.win==0){
-  	printf("Player 1: WINS\n");
-  }else{
-  	printf("Player 2: WINS\n");
-  }
+  	if(game.p1.win==1){
+  		drawBoard();
+  		fprintf(stderr,"Player 1: WINS\n");
+  	}else{
+  		drawBoard();
+  		fprintf(stderr,"Player 2: WINS\n");
+  	}
 }
 
 int main(int argc,const char** argv){
   fprintf(stdout,"This is TicTocToe. You know the rules. Have fun.\n");
-  GameInfo game;
-  initPlayers(game);
-  initBoard(game);
+
+  initPlayers();
+  initBoard();
   switch(game.numPlayer){
   	case 0:
   		fprintf(stdout,"need to impliment");
@@ -189,7 +239,7 @@ int main(int argc,const char** argv){
   		fprintf(stdout,"need  to implement");
   		break;
   	case 2:
-  		twoPlay(game);
+  		twoPlay();
   		break;
   }
   return 0;
