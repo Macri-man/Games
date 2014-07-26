@@ -41,7 +41,7 @@ void initPlayers();
 void initPlayer();
 void drawBoard();
 void drawHelper(char c, int i,int j);
-int winCheck(char c);
+int winCheck();
 int checkBounds(int row,int column);
 int checkMove(int row,int column);
 void AI();
@@ -103,12 +103,14 @@ void readMulPos(){
   		game.p1.lenPos++;
 		game.p1.position=realloc(game.p1.position,sizeof(game.p1.position)*game.p1.lenPos);
   		game.board[row][column].xo=game.p1.xo;
+  		game.board[row][column].player=1;
   		game.p1.position.row=row;
   		game.p1.position.column=column;
   	}else{
   		game.p2.lenPos++;
 		game.p2.position=realloc(game.p2.position,sizeof(game.p2.position)*game.p2.lenPos);
   		game.board[row][column].xo=game.p2.xo;
+  		game.board[row][column].player=2;
   		game.p2.position.row=row;
   		game.p2.position.column=column;
   	}
@@ -122,18 +124,17 @@ int checkMove(int row,int column){
 	return (game.board[row][column].xo==' ')?2:0;
 }
 
-int winCheck(char c){
-	int i=(c==game.p1.xo)?1:2;
-	if(c==game.board[0][0].xo&&c==game.board[0][1].xo&&c==game.board[0][2].xo)return i;
-	if(c==game.board[1][0].xo&&c==game.board[1][1].xo&&c==game.board[1][2].xo)return i;
-	if(c==game.board[2][0].xo&&c==game.board[2][1].xo&&c==game.board[2][2].xo)return i;
-	if(c==game.board[0][0].xo&&c==game.board[1][0].xo&&c==game.board[2][0].xo)return i;
-	if(c==game.board[0][1].xo&&c==game.board[1][1].xo&&c==game.board[2][1].xo)return i;
-	if(c==game.board[0][2].xo&&c==game.board[1][2].xo&&c==game.board[2][2].xo)return i;
-	if(c==game.board[0][0].xo&&c==game.board[1][1].xo&&c==game.board[2][2].xo)return i;
-	if(c==game.board[0][2].xo&&c==game.board[1][1].xo&&c==game.board[2][0].xo)return i;
+int winCheck(){
+	int i;
+	for(i=0;i<3;i++){
+		if(game.board[i][0].xo&&game.board[i][1].xo==game.board[i][0].xo&&game.board[i][2].xo==game.board[i][0].xo)return game.board[i][0].player;
+		if(game.board[0][i].xo&&game.board[1][i].xo==game.board[0][i].xo&&game.board[2][i].xo==game.board[0][i].xo)return game.board[0][i].player;
+	}
+	if(game.board[1][1]==game.board[0][0]&&game.board[2][2]==game.board[0][0])return game.board[0][0].player;
+	if(game.board[1][1]==game.board[2][0]&&game.board[0][2]==game.board[1][1])return game.board[1][1].player;
+	
 	return 0;
-}
+ }
 
 /*void drawBoard(){
 fprintf(stderr,"draw board game size: %d\n",game.size);
@@ -186,8 +187,7 @@ void twoPlay(){
 	while(game.p1.win!=1&&game.p2.win!=2){
   		drawBoard();
   		readMulPos();
-  		game.p1.win=winCheck('X');
-  		game.p2.win=winCheck('0');
+  		(winCheck()==1)?game.p1.win=1:game.p2.win=2;
   		fprintf(stderr, "%d\n",game.p1.win);
   		fprintf(stderr, "%d\n",game.p2.win);
   		game.turn++;
@@ -210,8 +210,7 @@ void onePlay(){
   		}else{
   			AI();
   		}
-  		game.p1.win=winCheck('X');
-  		game.p2.win=winCheck('0');
+  		(winCheck()==1)?game.p1.win=1:game.p2.win=2;
   		fprintf(stderr, "%d\n",game.p1.win);
   		fprintf(stderr, "%d\n",game.p2.win);
   		game.turn++;
